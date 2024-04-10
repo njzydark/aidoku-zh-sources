@@ -46,7 +46,7 @@ fn get_page_list(manga_id: String, chapter_id: String) -> Result<Vec<Page>> {
 	parser::get_page_list(base_url)
 }
 
-#[modify_image_request]
-pub fn modify_image_request(request: Request) {
-	request.header("Referer", BASE_URL);
-}
+// #[modify_image_request]
+// pub fn modify_image_request(request: Request) {
+// 	request.header("Referer", BASE_URL);
+// }

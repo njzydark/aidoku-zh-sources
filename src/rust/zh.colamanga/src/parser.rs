@@ -1,8 +1,3 @@
-use crate::{
-	api,
-	decoder::{decompress_from_base64, Decoder},
-};
-
 use aidoku::{
 	error::Result,
 	helpers::uri::encode_uri,
@@ -14,6 +9,9 @@ use aidoku::{
 	MangaViewer, Page,
 };
 use alloc::{string::ToString, vec};
+use regex::Regex;
+
+use crate::api;
 
 const BASE_URL: &str = "https://www.colamanga.com";
 
@@ -228,28 +226,23 @@ pub fn get_chapter_list(html: Node) -> Result<Vec<Chapter>> {
 pub fn get_page_list(base_url: String) -> Result<Vec<Page>> {
 	let mut pages: Vec<Page> = Vec::new();
 
-	api::get_page_list("aWlQbzNBZG1YblQ5Nm1SOGJlWUxOb0RsRE12NVBCZUxNRUZ5WFJ5L29ZenhPQVZVUm9KZlhIaU9CRGJwSGUzZ0FkbkFDTUtpcUVYR3M0ODJlY29qUFZLU2QvM044SWhZMHdEV20yYzloTHJDOEFTYXg0MS9QY2o0OU5IZFhtekRHNkh5VmxtK0RiMy9BdU9KR01LS1N6djREYnQ0Y3dydncybzhWRWJkZjN0MmwydHlKWHlrV1NzQWxxY3BDeVBaZk5YZUd5QUpBY2FCS01rb1ZpeG1WS1E3QnFZRTBlM2tyakY1cEhOcUx4REtmTUhRZTB3bWFpRzFPNHpvVWJPZ3JLWTE1TnBNNVI4RlhCTktQNThhY3FwajlZWG5DVXpBdFdDQzlCYU5OVFREZkRkNnVpZW9JcityaDJSZ2FiUURvTytwT3J6Q2FoRWZ2YmQ3Z1pFMnFHTFFJS3BESWtvTnZ1bU9EME82eGIvMjBWeG1EK0NjS1UvWE5aRm1kS1MzV0lpeEdMSmlXZlY0VVdMaXNraEg3VTB6RFdJSkdVeGlnTmpIR2ZmckhYMzR1ZnM5ei8wRmpTTUxxVXlIY1RKRDljcWRRVzFzUUw5ODdqbHptbVRMU292UWZpOVZvQjRRYnlnekRwSWQzMzRTQjdkSS8xSDc3QnpvZjFKSm5yazBRQTViSkxDMFU3d0R0YTduNkJMMVRQTkNhaFlXdDRrVjhMcWpGMVRuc2lGUGVLbTNtbk1XZ0toTTlzaDhVam9MNXZQQnk5eUpPRHRXSlVHWktEOHJDRnBHMHV1ZCtXbGJ2bWdVZ3U1cGVvb1NCNFY0dDFreFdCMVBhSGdacXZEOHNlRDlGWkF0c01sWllFSlRndkExNzJVMmU2SS9KN2pGaG96cmZ0RlYrYjRmTitpekJ5dEUvTzRTcUdVQ3FaWjdMczdrd3RmQUZINVhMZUdmWlM5ZjVTcTQwR1hwVWFzM0h5ZGJ5SXNnOXJRS2M5SFcySWFIRjVOMm1yZUZBam5OU3NvK2JKRFB2TEZWalEreVpvcmZoNHhOSG8reEd5WThnSVVobUpib0s4b2VKRkRRQUZZSWFPYjJRZm1rZzZLUA");
-
 	let res = Request::new(base_url.as_str(), HttpMethod::Get);
 	let html = res.html()?;
 
-	let base_data = html.select("script").to_string();
+	let base_data_re = Regex::new(r#"C_DATA\s*=\s*'(?<base_data>\S*)'"#).unwrap();
+	let base_data_raw = html.select("script").to_string();
+	let base_data_caps = base_data_re.captures(&base_data_raw).unwrap();
+	let base_data = &base_data_caps["base_data"];
 	println!("base_data: {}", base_data);
 
-	for (index, page_ref) in vec![0; 99].iter().enumerate() {
-		// let elem = match page_ref.as_node() {
-		// 	Ok(node) => node,
-		// 	Err(_) => continue,
-		// };
+	let page_list = api::get_page_list(&base_data)?;
 
-		let page = index + 1;
-		let url = format!("https://img1.colamanga.com/comic/19186/MkxZckViR1VxdS9JZDhrRE1HZHNENkZOdlhHMEwzTW5KRThYQzkySmc5WT0=/{:04}.enc.webp", page);
-
-		println!("{} {}", index, url);
+	for (index, url) in page_list.iter().enumerate() {
+		println!("{} {}", index + 1, url);
 
 		pages.push(Page {
 			index: index as i32,
-			url,
+			url: url.to_string(),
 			base64: String::new(),
 			text: String::new(),
 		});

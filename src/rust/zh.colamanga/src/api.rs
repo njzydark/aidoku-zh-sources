@@ -1,15 +1,12 @@
 use aidoku::{
-	error::{AidokuError, Result},
+	error::Result,
 	helpers::uri::encode_uri_component,
 	prelude::{format, println},
-	std::{
-		net::{HttpMethod, Request},
-		ObjectRef, String, StringRef,
-	},
+	std::{net::Request, String, StringRef},
 };
-use alloc::{borrow::ToOwned, vec::Vec};
+use alloc::vec::Vec;
 
-const BASE_URL: &str = "http://localhost:8346";
+const BASE_URL: &str = "http://192.168.1.19:8346";
 
 #[derive(Debug)]
 pub struct PageListRes {
